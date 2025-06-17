@@ -60,16 +60,13 @@ export default function BudgetApp() {
   if (status === "loading" || isLoading) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="flex items-center space-x-3">
-          <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-          <div className="text-white text-lg font-medium">Caricamento...</div>
-        </div>
+        <div className="text-white text-lg font-medium">Caricamento...</div>
       </div>
     )
   }
 
   if (status === "unauthenticated") {
-    // Il middleware si occuperà del redirect
+    // NextAuth middleware si occuperà del redirect
     return null
   }
 

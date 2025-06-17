@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth"
 
 export default auth((req) => {
-  // Se l'utente non è autenticato e non sta già andando alle pagine di auth
+  // Se l'utente non è autenticato e non sta già andando alla pagina di login
   if (!req.auth && !req.nextUrl.pathname.startsWith("/auth")) {
     const newUrl = new URL("/auth/signin", req.nextUrl.origin)
     return Response.redirect(newUrl)
