@@ -14,8 +14,7 @@ export function SignInForm() {
     try {
       setIsLoading(true)
       await signIn("google", {
-        callbackUrl: "/",
-        redirect: true,
+        redirectTo: "/",
       })
     } catch (error) {
       console.error("Sign in error:", error)

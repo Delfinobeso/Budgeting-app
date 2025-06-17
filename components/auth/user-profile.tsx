@@ -20,7 +20,7 @@ export function UserProfile() {
   const handleSignOut = async () => {
     try {
       setIsLoading(true)
-      await signOut({ callbackUrl: "/auth/signin" })
+      await signOut({ redirectTo: "/auth/signin" })
     } catch (error) {
       console.error("Sign out error:", error)
     } finally {

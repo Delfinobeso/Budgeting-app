@@ -1,21 +1,12 @@
-import { withAuth } from "next-auth/middleware"
+import { auth } from "@/lib/auth"
 
-export default withAuth(
-  function middleware(req) {
-    // Middleware aggiuntivo se necessario
-  },
-  {
-    callbacks: {
-      authorized: ({ token, req }) => {
-        // Proteggi tutte le route tranne quelle di auth
-        if (req.nextUrl.pathname.startsWith("/auth")) {
-          return true
-        }
-        return !!token
-      },
-    },
-  },
-)
+export default auth((req) => {
+  // Se l'utente non è autenticato e non sta già andando alle pagine di auth
+  if (!req.auth && !req.nextUrl.pathname.startsWith("/auth")) {
+    const newUrl = new URL("/auth/signin", req.nextUrl.origin)
+    return Response.redirect(newUrl)
+  }
+})
 
 export const config = {
   matcher: [
