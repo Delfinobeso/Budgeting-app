@@ -4,6 +4,7 @@ import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 import { EnhancedCircularProgress } from "./enhanced-circular-progress"
 import { DEFAULT_CATEGORIES, EXTENDED_CATEGORIES, BUDGET_SUGGESTIONS } from "@/lib/constants"
 import type { Category, BudgetData } from "@/types/budget"
@@ -232,26 +233,26 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
 
       {/* Step 2: Category Configuration */}
       {step === 2 && (
-        <div className="min-h-screen bg-gray-50 flex flex-col animate-slide-up">
+        <div className="h-screen bg-gray-50 flex flex-col animate-slide-up overflow-hidden">
           {/* iOS Safe Area Header */}
           <div className="ios-safe-top flex-shrink-0" />
 
-          {/* Main Content Container - No Scroll Design */}
-          <div className="flex-1 flex flex-col px-4 py-2 min-h-0 max-w-sm mx-auto">
+          {/* Main Content Container - iPhone 13 Optimized */}
+          <div className="flex-1 flex flex-col min-h-0 max-w-sm mx-auto px-0">
             {/* Compact Header */}
-            <div className="flex-shrink-0 text-center mb-4">
-              <h1 className="text-xl font-bold text-black mb-1 tracking-tight">Distribuisci Budget</h1>
-              <p className="text-gray-600 text-sm">€{totalBudget} mensili</p>
+            <div className="flex-shrink-0 text-center py-3">
+              <h1 className="text-xl font-bold text-black mb-1">Distribuisci il budget</h1>
+              <p className="text-gray-600 text-xs">Personalizza i tuoi €{totalBudget}</p>
             </div>
 
             {/* Category Mode Toggle - Compact */}
-            <div className="flex-shrink-0 mb-4">
+            <div className="flex-shrink-0 mb-3">
               <div className="flex bg-gray-200 rounded-xl p-1">
                 <Button
                   variant={useSimpleCategories ? "default" : "ghost"}
                   onClick={() => switchCategoryMode(true)}
                   className={`flex-1 h-8 rounded-lg font-medium text-xs transition-all ${
-                    useSimpleCategories ? "bg-black text-white shadow-md" : "text-gray-600 hover:bg-gray-100"
+                    useSimpleCategories ? "bg-black text-white shadow-lg" : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <Target className="w-3 h-3 mr-1" />
@@ -261,7 +262,7 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
                   variant={!useSimpleCategories ? "default" : "ghost"}
                   onClick={() => switchCategoryMode(false)}
                   className={`flex-1 h-8 rounded-lg font-medium text-xs transition-all ${
-                    !useSimpleCategories ? "bg-black text-white shadow-md" : "text-gray-600 hover:bg-gray-100"
+                    !useSimpleCategories ? "bg-black text-white shadow-lg" : "text-gray-600 hover:bg-gray-100"
                   }`}
                 >
                   <Home className="w-3 h-3 mr-1" />
@@ -271,14 +272,14 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
             </div>
 
             {/* Compact Budget Overview */}
-            <div className="flex-shrink-0 mb-4">
-              <Card className="bg-white rounded-xl shadow-sm p-3">
+            <div className="flex-shrink-0 mb-3">
+              <Card className="bg-white rounded-xl shadow-md p-3">
                 <CardContent className="p-0">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
                       <EnhancedCircularProgress
                         percentage={Math.min(totalPercentage, 100)}
-                        size={50}
+                        size={60}
                         color={
                           Math.abs(totalPercentage - 100) <= 1
                             ? "#22c55e"
@@ -291,15 +292,24 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
                           <div className="text-xs font-bold text-black">{totalPercentage}%</div>
                         </div>
                       </EnhancedCircularProgress>
-                      <div>
-                        <div className="text-sm font-semibold text-black">Totale Budget</div>
-                        <div className="text-xs text-gray-600">
+                      <div className="flex-1">
+                        <div className="text-sm font-semibold text-black">Budget Totale</div>
+                        <Badge
+                          variant={Math.abs(totalPercentage - 100) <= 1 ? "default" : "secondary"}
+                          className={`text-xs mt-1 ${
+                            Math.abs(totalPercentage - 100) <= 1
+                              ? "bg-green-100 text-green-800 border-green-200"
+                              : totalPercentage > 100
+                                ? "bg-red-100 text-red-800 border-red-200"
+                                : "bg-amber-100 text-amber-800 border-amber-200"
+                          }`}
+                        >
                           {Math.abs(totalPercentage - 100) <= 1
                             ? "Perfetto!"
                             : totalPercentage > 100
-                              ? `Troppo alto: -${totalPercentage - 100}%`
+                              ? `Troppo: -${totalPercentage - 100}%`
                               : `Manca: +${100 - totalPercentage}%`}
-                        </div>
+                        </Badge>
                       </div>
                     </div>
                   </div>
@@ -307,43 +317,46 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
               </Card>
             </div>
 
-            {/* Categories Grid - Adaptive Layout */}
-            <div className="flex-1 min-h-0 mb-4">
-              <div className="grid grid-cols-1 gap-2 h-full">
+            {/* Categories - Optimized Scrollable Container */}
+            <div className="flex-1 overflow-y-auto min-h-0 mb-3 scrollbar-hide">
+              <div className="space-y-2">
                 {categories.map((category, index) => (
                   <Card
                     key={category.id}
                     className="bg-white rounded-xl shadow-sm p-3 hover:shadow-md transition-all duration-200"
                   >
                     <CardContent className="p-0">
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-2 min-w-0 flex-1">
                           <span className="text-base flex-shrink-0">{category.icon}</span>
                           <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between">
-                              <span className="font-medium text-black text-sm truncate">{category.name}</span>
-                              <div className="flex items-center space-x-2 flex-shrink-0">
-                                <span className="text-xs text-gray-600 font-medium">
-                                  €{((Number.parseFloat(totalBudget) * category.percentage) / 100).toFixed(0)}
-                                </span>
-                                <PercentageInput
-                                  value={category.percentage}
-                                  onChange={(value) => updateCategoryPercentage(index, value)}
-                                />
-                              </div>
-                            </div>
-                            <div className="mt-1">
-                              <div className="w-full bg-gray-200 rounded-full h-1.5">
-                                <div
-                                  className="h-1.5 rounded-full transition-all duration-500"
-                                  style={{
-                                    width: `${Math.min(category.percentage, 100)}%`,
-                                    backgroundColor: category.color,
-                                  }}
-                                />
-                              </div>
-                            </div>
+                            <span className="font-medium text-black text-sm truncate block">{category.name}</span>
+                            <p className="text-xs text-gray-500 truncate">{(category as any).description}</p>
                           </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <PercentageInput
+                            value={category.percentage}
+                            onChange={(value) => updateCategoryPercentage(index, value)}
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-1">
+                        <div className="flex justify-between items-center text-xs text-gray-600">
+                          <span className="truncate">
+                            €{((Number.parseFloat(totalBudget) * category.percentage) / 100).toFixed(0)}
+                          </span>
+                          <span className="flex-shrink-0">{category.percentage}%</span>
+                        </div>
+                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                          <div
+                            className="h-1.5 rounded-full transition-all duration-500"
+                            style={{
+                              width: `${Math.min(category.percentage, 100)}%`,
+                              backgroundColor: category.color,
+                            }}
+                          />
                         </div>
                       </div>
                     </CardContent>
@@ -352,32 +365,32 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
               </div>
             </div>
 
-            {/* Sticky Action Buttons - iOS Style */}
-            <div className="flex-shrink-0 pb-safe-bottom">
-              <div className="flex gap-3 mb-3">
+            {/* Fixed Action Buttons - Always Visible */}
+            <div className="flex-shrink-0 bg-gray-50">
+              <div className="flex gap-2 mb-3">
                 <Button
                   variant="outline"
                   onClick={() => setStep(1)}
-                  className="flex-1 h-11 bg-white border border-gray-300 text-black rounded-xl hover:bg-gray-50 transition-all duration-200"
+                  className="flex-1 h-10 bg-white border border-gray-300 text-black rounded-xl hover:bg-gray-50 text-sm font-medium"
                 >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  <ArrowLeft className="mr-1 h-3 w-3" />
                   Indietro
                 </Button>
                 <Button
                   onClick={() => setStep(3)}
                   disabled={Math.abs(totalPercentage - 100) > 1}
-                  className="flex-1 h-11 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 shadow-sm"
+                  className="flex-1 h-10 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 text-sm"
                 >
                   Continua
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-1 h-3 w-3" />
                 </Button>
               </div>
 
-              {/* Progress indicators */}
-              <div className="flex justify-center space-x-1">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <div className="w-6 h-2 bg-black rounded-full"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              {/* Compact Progress indicators */}
+              <div className="flex justify-center space-x-1 pb-safe-bottom">
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-black rounded-full"></div>
+                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
               </div>
             </div>
           </div>
