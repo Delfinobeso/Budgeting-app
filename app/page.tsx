@@ -2,89 +2,63 @@
 
 import { useState, useEffect } from "react"
 import { OnboardingSetup } from "@/components/onboarding-setup"
-import { EnhancedDashboard } from "@/components/enhanced-dashboard"
-import { UnifiedAuthForm } from "@/components/unified-auth-form"
-import { useAuthSystem } from "@/hooks/use-auth-system"
+import { SimpleDashboard } from "@/components/simple-dashboard"
 import type { BudgetData, Expense } from "@/types/budget"
 
 export default function BudgetApp() {
-  const {
-    user,
-    isLoading: authLoading,
-    isAuthenticated,
-    login,
-    register,
-    logout,
-    updateProfile,
-    avatarCharacters,
-    avatarBackgrounds,
-  } = useAuthSystem()
-
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null)
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
 
   console.log("🚀 App State:", {
-    user: user?.email,
-    isAuthenticated,
-    authLoading,
     hasBudget: !!budgetData,
+    isLoading,
   })
 
-  // Carica budget quando l'utente è autenticato
+  // Carica budget salvato al mount
   useEffect(() => {
-    if (user && isAuthenticated) {
-      loadUserBudget()
-    } else {
-      setBudgetData(null)
-    }
-  }, [user, isAuthenticated])
+    loadBudgetData()
+  }, [])
 
-  const loadUserBudget = () => {
-    if (!user) return
-
+  const loadBudgetData = () => {
     setIsLoading(true)
     try {
-      const budgetKey = `budget-data-${user.id}`
-      const savedBudget = localStorage.getItem(budgetKey)
+      const savedBudget = localStorage.getItem("budget-app-data")
 
       if (savedBudget) {
         const budget = JSON.parse(savedBudget)
         setBudgetData(budget)
-        console.log("✅ Budget loaded for user:", user.email)
+        console.log("✅ Budget loaded from localStorage")
       } else {
-        console.log("📝 No budget found for user:", user.email)
+        console.log("📝 No budget found in localStorage")
         setBudgetData(null)
       }
     } catch (error) {
       console.error("❌ Error loading budget:", error)
+      localStorage.removeItem("budget-app-data")
+      setBudgetData(null)
     } finally {
       setIsLoading(false)
     }
   }
 
   const handleOnboardingComplete = (newBudgetData: BudgetData) => {
-    if (!user) return
-
-    const budgetWithUser = {
+    const budgetWithMetadata = {
       ...newBudgetData,
-      userId: user.id,
       id: `budget-${Date.now()}`,
       createdAt: new Date().toISOString(),
     }
 
-    const budgetKey = `budget-data-${user.id}`
-    localStorage.setItem(budgetKey, JSON.stringify(budgetWithUser))
-    setBudgetData(budgetWithUser)
-    console.log("✅ Budget created for user:", user.email)
+    localStorage.setItem("budget-app-data", JSON.stringify(budgetWithMetadata))
+    setBudgetData(budgetWithMetadata)
+    console.log("✅ Budget created and saved locally")
   }
 
   const handleAddExpense = (expenseData: Omit<Expense, "id">) => {
-    if (!user || !budgetData) return
+    if (!budgetData) return
 
     const newExpense: Expense = {
       ...expenseData,
       id: `expense-${Date.now()}`,
-      userId: user.id,
       amount:
         typeof expenseData.amount === "number" ? expenseData.amount : Number.parseFloat(expenseData.amount.toString()),
     }
@@ -94,43 +68,28 @@ export default function BudgetApp() {
       expenses: [...budgetData.expenses, newExpense],
     }
 
-    const budgetKey = `budget-data-${user.id}`
-    localStorage.setItem(budgetKey, JSON.stringify(updatedBudget))
+    localStorage.setItem("budget-app-data", JSON.stringify(updatedBudget))
     setBudgetData(updatedBudget)
-    console.log("✅ Expense added for user:", user.email)
+    console.log("✅ Expense added and saved locally")
   }
 
   const handleReset = () => {
-    if (!user) return
-
-    const budgetKey = `budget-data-${user.id}`
-    localStorage.removeItem(budgetKey)
+    localStorage.removeItem("budget-app-data")
     setBudgetData(null)
-    console.log("🔄 Budget reset for user:", user.email)
-  }
-
-  const handleLogout = () => {
-    console.log("🔐 Initiating logout process...")
-    setBudgetData(null)
-    logout() // This will clear session data and redirect
+    console.log("🔄 Budget reset - localStorage cleared")
   }
 
   // Loading state - Consistent with app design
-  if (authLoading || isLoading) {
+  if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center font-sans">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-6"></div>
           <div className="text-black text-xl font-bold mb-2">Caricamento...</div>
-          <div className="text-gray-600">{authLoading ? "Verifica autenticazione..." : "Caricamento dati..."}</div>
+          <div className="text-gray-600">Caricamento dati budget...</div>
         </div>
       </div>
     )
-  }
-
-  // Not authenticated - Show unified auth form
-  if (!isAuthenticated || !user) {
-    return <UnifiedAuthForm onLogin={login} onRegister={register} />
   }
 
   // No budget data - Show onboarding
@@ -138,19 +97,14 @@ export default function BudgetApp() {
     return <OnboardingSetup onComplete={handleOnboardingComplete} />
   }
 
-  // Main dashboard with user profile
+  // Main dashboard
   return (
-    <EnhancedDashboard
+    <SimpleDashboard
       totalBudget={budgetData.totalBudget}
       categories={budgetData.categories}
       expenses={budgetData.expenses}
       onAddExpense={handleAddExpense}
       onReset={handleReset}
-      user={user}
-      onLogout={handleLogout}
-      onUpdateProfile={updateProfile}
-      avatarCharacters={avatarCharacters}
-      avatarBackgrounds={avatarBackgrounds}
     />
   )
 }
