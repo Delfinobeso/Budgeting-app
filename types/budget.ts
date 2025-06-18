@@ -31,6 +31,7 @@ export interface BudgetData {
   month: number
   year: number
   createdAt?: string
+  lastResetDate?: string // Data dell'ultimo reset mensile
 }
 
 export interface User {
@@ -70,4 +71,38 @@ export interface SpendingAnalytics {
   dailyAverage: number
   weeklyTrend: number
   monthlyProjection: number
+}
+
+// Nuovi tipi per lo storico mensile
+export interface CategoryBalance {
+  categoryId: string
+  categoryName: string
+  budgetAllocated: number
+  totalSpent: number
+  remainingBalance: number // Può essere negativo se overspent
+  color: string
+  icon: string
+  percentage: number
+}
+
+export interface MonthlyRecord {
+  id: string
+  month: number
+  year: number
+  totalBudget: number
+  totalSpent: number
+  totalRemaining: number // Può essere negativo
+  categoryBalances: CategoryBalance[]
+  resetDate: string
+  expenseCount: number
+}
+
+export interface HistoricalData {
+  monthlyRecords: MonthlyRecord[]
+  totalSavedAllTime: number
+  totalOverspentAllTime: number
+  bestSavingMonth: MonthlyRecord | null
+  worstOverspentMonth: MonthlyRecord | null
+  averageMonthlyBalance: number
+  lastUpdated: string
 }

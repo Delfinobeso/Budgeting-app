@@ -68,7 +68,7 @@ export const EXTENDED_CATEGORIES = [
 ]
 
 export const BUDGET_SUGGESTIONS = [
-  { amount: 1500, label: "Budget Base" },
-  { amount: 2500, label: "Budget Medio" },
-  { amount: 4000, label: "Budget Alto" },
+  { amount: 1500, label: "€1500" },
+  { amount: 2500, label: "€2500" },
+  { amount: 4000, label: "€4000" },
 ]

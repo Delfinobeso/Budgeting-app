@@ -1,13 +1,15 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { OnboardingSetup } from "@/components/onboarding-setup"
-import { SimpleDashboard } from "@/components/simple-dashboard"
-import type { BudgetData, Expense } from "@/types/budget"
+import { EnhancedOnboarding } from "@/components/enhanced-onboarding"
+import { IOSOptimizedDashboard } from "@/components/ios-optimized-dashboard"
+import type { BudgetData, Expense, HistoricalData } from "@/types/budget"
+import { shouldResetBudget, performMonthlyReset, getHistoricalData } from "@/lib/monthly-reset"
 
 export default function BudgetApp() {
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
+  const [historicalData, setHistoricalData] = useState<HistoricalData | null>(null)
 
   console.log("🚀 App State:", {
     hasBudget: !!budgetData,
@@ -23,9 +25,21 @@ export default function BudgetApp() {
     setIsLoading(true)
     try {
       const savedBudget = localStorage.getItem("budget-app-data")
+      const historical = getHistoricalData()
+      setHistoricalData(historical)
 
       if (savedBudget) {
-        const budget = JSON.parse(savedBudget)
+        let budget = JSON.parse(savedBudget)
+
+        // Controlla se è necessario un reset mensile
+        if (shouldResetBudget(budget)) {
+          console.log("🔄 Monthly reset required")
+          budget = performMonthlyReset(budget)
+          localStorage.setItem("budget-app-data", JSON.stringify(budget))
+          // Ricarica i dati storici dopo il reset
+          setHistoricalData(getHistoricalData())
+        }
+
         setBudgetData(budget)
         console.log("✅ Budget loaded from localStorage")
       } else {
@@ -79,14 +93,14 @@ export default function BudgetApp() {
     console.log("🔄 Budget reset - localStorage cleared")
   }
 
-  // Loading state - Consistent with app design
+  // iOS-style loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-sans">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-sans ios-safe-area">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-6"></div>
-          <div className="text-black text-xl font-bold mb-2">Caricamento...</div>
-          <div className="text-gray-600">Caricamento dati budget...</div>
+          <div className="text-black text-xl font-bold mb-2 ios-title">Mobius</div>
+          <div className="text-gray-600 ios-body">Caricamento...</div>
         </div>
       </div>
     )
@@ -94,17 +108,18 @@ export default function BudgetApp() {
 
   // No budget data - Show onboarding
   if (!budgetData) {
-    return <OnboardingSetup onComplete={handleOnboardingComplete} />
+    return <EnhancedOnboarding onComplete={handleOnboardingComplete} />
   }
 
-  // Main dashboard
+  // Main iOS-optimized dashboard
   return (
-    <SimpleDashboard
+    <IOSOptimizedDashboard
       totalBudget={budgetData.totalBudget}
       categories={budgetData.categories}
       expenses={budgetData.expenses}
       onAddExpense={handleAddExpense}
       onReset={handleReset}
+      historicalData={historicalData}
     />
   )
 }

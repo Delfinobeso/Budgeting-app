@@ -9,9 +9,6 @@ import { AddExpense } from "./add-expense"
 import { BottomNav } from "./bottom-nav"
 import type { Category, Expense } from "@/types/budget"
 import {
-  RotateCcw,
-  TrendingUp,
-  TrendingDown,
   Calendar,
   AlertTriangle,
   Target,
@@ -31,6 +28,9 @@ import {
   formatDate,
   groupExpensesByDate,
 } from "@/lib/expense-utils"
+import { SettingsModal } from "./settings-modal"
+import { HistoricalTrends } from "./historical-trends"
+import type { HistoricalData } from "@/types/budget"
 
 interface SimpleDashboardProps {
   totalBudget: number
@@ -38,14 +38,23 @@ interface SimpleDashboardProps {
   expenses: Expense[]
   onAddExpense: (expense: Omit<Expense, "id">) => void
   onReset: () => void
+  historicalData: HistoricalData | null
 }
 
-export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpense, onReset }: SimpleDashboardProps) {
+export function SimpleDashboard({
+  totalBudget,
+  categories,
+  expenses,
+  onAddExpense,
+  onReset,
+  historicalData,
+}: SimpleDashboardProps) {
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [activeTab, setActiveTab] = useState("home")
   const [isVisible, setIsVisible] = useState(false)
   const [showBudgetDetails, setShowBudgetDetails] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [showSettings, setShowSettings] = useState(false)
 
   useEffect(() => {
     setIsVisible(true)
@@ -98,11 +107,11 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
             }`}
           >
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-black">Il tuo Budget 💰</h1>
+              <h1 className="text-2xl md:text-3xl font-bold text-black">
+                Il tuo Budget - {new Date().toLocaleDateString("it-IT", { month: "long", year: "numeric" })}
+              </h1>
               <div className="flex items-center space-x-2 mt-1">
-                <span className="text-sm text-gray-500">
-                  {new Date().toLocaleDateString("it-IT", { month: "long", year: "numeric" })}
-                </span>
+                <span className="text-sm text-gray-500">Inizia oggi, prendi il controllo delle tue spese.</span>
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -114,10 +123,7 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
               >
                 {showBudgetDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </Button>
-              <Button variant="outline" size="sm" onClick={onReset} className="p-2 rounded-full">
-                <RotateCcw className="h-4 w-4" />
-              </Button>
-              <Button variant="outline" size="sm" className="p-2 rounded-full">
+              <Button variant="outline" size="sm" onClick={() => setShowSettings(true)} className="p-2 rounded-full">
                 <Settings className="h-4 w-4" />
               </Button>
             </div>
@@ -180,14 +186,16 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
                           criticalMetrics.remainingBudget < 0 ? "text-red-600" : "text-green-600"
                         }`}
                       >
-                        {formatCurrency(Math.abs(criticalMetrics.remainingBudget))}
-                        {criticalMetrics.remainingBudget < 0 && " in rosso"}
+                        €{Math.abs(criticalMetrics.remainingBudget).toFixed(0)}{" "}
+                        {criticalMetrics.remainingBudget < 0 ? "in rosso" : "da gestire"}
                       </span>
                     </div>
 
                     <div className="flex justify-between items-center">
                       <span className="text-sm font-medium text-gray-700">Media giornaliera</span>
-                      <span className="text-lg font-semibold text-black">{formatCurrency(analytics.dailyAverage)}</span>
+                      <span className="text-lg font-semibold text-black">
+                        {analytics.dailyAverage > 0 ? formatCurrency(analytics.dailyAverage) : "0 € (per ora!)"}
+                      </span>
                     </div>
 
                     <div className="flex justify-between items-center">
@@ -198,16 +206,10 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
                             analytics.monthlyProjection > analytics.totalBudget ? "text-red-600" : "text-green-600"
                           }`}
                         >
-                          {formatCurrency(analytics.monthlyProjection)}
+                          {analytics.monthlyProjection > 0
+                            ? formatCurrency(analytics.monthlyProjection)
+                            : "0 € spesi stimati"}
                         </span>
-                        <div className="flex items-center text-xs text-gray-500">
-                          {analytics.weeklyTrend > 0 ? (
-                            <TrendingUp className="h-3 w-3 text-red-500 mr-1" />
-                          ) : (
-                            <TrendingDown className="h-3 w-3 text-green-500 mr-1" />
-                          )}
-                          {Math.abs(analytics.weeklyTrend).toFixed(0)}% vs settimana scorsa
-                        </div>
                       </div>
                     </div>
                   </div>
@@ -246,7 +248,7 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
               className="h-20 md:h-16 bg-black hover:bg-gray-800 text-white rounded-2xl flex flex-col items-center justify-center space-y-1 p-3"
             >
               <Zap className="h-5 w-5" />
-              <span className="text-xs font-medium">Nuova Spesa</span>
+              <span className="text-xs font-medium">Aggiungi una spesa</span>
             </Button>
 
             <Card className="h-20 md:h-16 p-2 md:p-3 rounded-2xl cursor-pointer hover:shadow-md transition-shadow">
@@ -296,7 +298,9 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
           <div className="space-y-3 mb-6">
             <div className="flex items-center justify-between">
               <h3 className="text-lg font-semibold text-black">Categorie</h3>
-              <span className="text-sm text-gray-500">{categories.length} categorie attive</span>
+              <span className="text-sm text-gray-500">
+                {categories.length} categorie attive: sei sulla buona strada!
+              </span>
             </div>
 
             {/* Prima le categorie critiche */}
@@ -483,75 +487,21 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
       {activeTab === "stats" && (
         <div className="p-6 pt-20">
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-bold text-black mb-4">Analisi Dettagliata</h2>
+            <h2 className="text-2xl font-bold text-black mb-4">Analisi Storica</h2>
+            <p className="text-gray-600">Visualizza i tuoi progressi nel tempo</p>
           </div>
 
-          {/* Statistiche avanzate con layout migliorato */}
-          <div className="grid gap-6">
-            {/* Proiezione mensile */}
-            <Card className="rounded-3xl shadow-lg p-6">
-              <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-lg font-semibold text-black flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2" />
-                  Proiezione Mensile
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="text-3xl font-bold text-black mb-2">{formatCurrency(analytics.monthlyProjection)}</div>
-                <div className="text-sm text-gray-600 mb-4">Spesa prevista a fine mese</div>
-                <div
-                  className={`text-sm p-3 rounded-lg ${
-                    analytics.monthlyProjection > analytics.totalBudget
-                      ? "bg-red-100 text-red-700"
-                      : "bg-green-100 text-green-700"
-                  }`}
-                >
-                  {analytics.monthlyProjection > analytics.totalBudget
-                    ? `⚠️ Superamento previsto: ${formatCurrency(analytics.monthlyProjection - analytics.totalBudget)}`
-                    : `✅ Risparmio previsto: ${formatCurrency(analytics.totalBudget - analytics.monthlyProjection)}`}
-                </div>
-              </CardContent>
+          {historicalData ? (
+            <HistoricalTrends historicalData={historicalData} />
+          ) : (
+            <Card className="rounded-3xl shadow-lg p-8 text-center">
+              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Calendar className="w-8 h-8 text-gray-400" />
+              </div>
+              <h3 className="text-xl font-bold text-black mb-2">Caricamento Dati Storici</h3>
+              <p className="text-gray-600">Preparazione dell'analisi dei tuoi progressi...</p>
             </Card>
-
-            {/* Spese per data */}
-            <Card className="rounded-3xl shadow-lg p-6">
-              <CardHeader className="p-0 mb-4">
-                <CardTitle className="text-lg font-semibold text-black flex items-center">
-                  <Calendar className="h-5 w-5 mr-2" />
-                  Cronologia Spese
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                <div className="space-y-3">
-                  {Object.entries(expensesByDate)
-                    .sort(([a], [b]) => b.localeCompare(a))
-                    .slice(0, 10)
-                    .map(([date, dayExpenses]) => {
-                      const dayTotal = dayExpenses.reduce((sum, exp) => sum + exp.amount, 0)
-                      const isToday = date === new Date().toISOString().split("T")[0]
-
-                      return (
-                        <div
-                          key={date}
-                          className={`flex justify-between items-center py-3 px-3 rounded-lg ${
-                            isToday ? "bg-blue-50 border border-blue-200" : "hover:bg-gray-50"
-                          }`}
-                        >
-                          <div>
-                            <div className="font-medium text-black">
-                              {formatDate(date)}
-                              {isToday && <Badge className="ml-2 text-xs bg-blue-100 text-blue-700">Oggi</Badge>}
-                            </div>
-                            <div className="text-sm text-gray-600">{dayExpenses.length} transazioni</div>
-                          </div>
-                          <div className="font-semibold text-black">{formatCurrency(dayTotal)}</div>
-                        </div>
-                      )
-                    })}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          )}
         </div>
       )}
 
@@ -561,6 +511,17 @@ export function SimpleDashboard({ totalBudget, categories, expenses, onAddExpens
       {/* Add Expense Modal */}
       {showAddExpense && (
         <AddExpense categories={categories} onAddExpense={onAddExpense} onClose={() => setShowAddExpense(false)} />
+      )}
+
+      {/* Settings Modal */}
+      {showSettings && (
+        <SettingsModal
+          onClose={() => setShowSettings(false)}
+          onReset={onReset}
+          totalBudget={totalBudget}
+          categories={categories}
+          expenses={expenses}
+        />
       )}
     </div>
   )

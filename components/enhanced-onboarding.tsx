@@ -8,14 +8,15 @@ import { Badge } from "@/components/ui/badge"
 import { EnhancedCircularProgress } from "./enhanced-circular-progress"
 import { DEFAULT_CATEGORIES, EXTENDED_CATEGORIES, BUDGET_SUGGESTIONS } from "@/lib/constants"
 import type { Category, BudgetData } from "@/types/budget"
-import { ArrowRight, ArrowLeft, Target, Home } from "lucide-react"
+import { ArrowRight, ArrowLeft, Check, Target, Home } from "lucide-react"
 import { PercentageInput } from "./percentage-input"
+import { MobiusLogo } from "./mobius-logo"
 
-interface OnboardingSetupProps {
+interface EnhancedOnboardingProps {
   onComplete: (budgetData: BudgetData) => void
 }
 
-export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
+export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
   const [step, setStep] = useState(1)
   const [totalBudget, setTotalBudget] = useState("")
   const [useSimpleCategories, setUseSimpleCategories] = useState(true)
@@ -113,7 +114,7 @@ export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
       {/* Step 1: Welcome & Budget Amount */}
       {step === 1 && (
         <div className="relative min-h-screen flex flex-col items-center justify-center p-6">
-          {/* Hero Card */}
+          {/* Hero Card con logo Mobius */}
           <div
             className={`transform transition-all duration-1000 ${
               isVisible ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"
@@ -122,7 +123,9 @@ export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
             <Card className="bg-white rounded-4xl shadow-2xl p-8 hover:scale-105 transition-all duration-300 max-w-sm">
               <CardContent className="p-0 text-center">
                 <div className="mb-6">
-                  <div className="text-5xl mb-4">💰</div>
+                  <div className="flex justify-center mb-4">
+                    <MobiusLogo size={60} />
+                  </div>
                   <h3 className="text-xl font-bold text-black mb-2">Budget Setup</h3>
                   <p className="text-sm text-gray-600">Configura il tuo budget mensile</p>
                 </div>
@@ -183,7 +186,7 @@ export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
                   onClick={() => selectBudgetSuggestion(suggestion.amount)}
                   className="bg-gray-800 border-gray-600 text-white hover:bg-gray-700"
                 >
-                  €{suggestion.amount}
+                  {suggestion.label}
                 </Button>
               ))}
             </div>
@@ -193,7 +196,7 @@ export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
                 <span className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg">€</span>
                 <Input
                   type="number"
-                  placeholder="2000"
+                  placeholder="Altro importo..."
                   value={totalBudget}
                   onChange={(e) => setTotalBudget(e.target.value)}
                   className="pl-10 h-14 text-lg border-2 border-gray-700 rounded-3xl focus:border-white bg-gray-900 text-white placeholder-gray-500"
@@ -420,11 +423,10 @@ export function OnboardingSetup({ onComplete }: OnboardingSetupProps) {
               </Button>
               <Button
                 onClick={handleComplete}
-                disabled={Math.abs(totalPercentage - 100) > 1}
-                className="w-full h-14 bg-black hover:bg-gray-800 text-white font-semibold rounded-3xl transition-all duration-200 active:scale-95 disabled:opacity-50"
+                className="flex-1 h-12 bg-black hover:bg-gray-800 text-white font-semibold rounded-2xl transition-all duration-200 active:scale-95"
               >
+                <Check className="mr-2 h-4 w-4" />
                 Conferma e inizia
-                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
 
