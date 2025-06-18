@@ -17,6 +17,21 @@ interface DashboardProps {
 }
 
 export function Dashboard({ totalBudget, categories, expenses, onAddExpense, onReset }: DashboardProps) {
+  // Validazione e conversione dei dati
+  const safeTotalBudget =
+    typeof totalBudget === "number" ? totalBudget : Number.parseFloat(totalBudget?.toString() || "0")
+  const safeExpenses = expenses.map((expense) => ({
+    ...expense,
+    amount: typeof expense.amount === "number" ? expense.amount : Number.parseFloat(expense.amount?.toString() || "0"),
+  }))
+
+  console.log("📊 Dashboard data validation:", {
+    originalTotalBudget: totalBudget,
+    safeTotalBudget,
+    totalBudgetType: typeof totalBudget,
+    expensesCount: expenses.length,
+  })
+
   const [showAddExpense, setShowAddExpense] = useState(false)
   const [activeTab, setActiveTab] = useState("home")
   const [isVisible, setIsVisible] = useState(false)
@@ -25,14 +40,14 @@ export function Dashboard({ totalBudget, categories, expenses, onAddExpense, onR
     setIsVisible(true)
   }, [])
 
-  const totalSpent = expenses.reduce((sum, expense) => sum + expense.amount, 0)
-  const remainingBudget = totalBudget - totalSpent
-  const spentPercentage = (totalSpent / totalBudget) * 100
+  const totalSpent = safeExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+  const remainingBudget = safeTotalBudget - totalSpent
+  const spentPercentage = safeTotalBudget > 0 ? (totalSpent / safeTotalBudget) * 100 : 0
 
   const categoriesWithSpent = categories.map((category) => {
-    const categoryExpenses = expenses.filter((expense) => expense.categoryId === category.id)
+    const categoryExpenses = safeExpenses.filter((expense) => expense.categoryId === category.id)
     const spent = categoryExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-    const budgetForCategory = (totalBudget * category.percentage) / 100
+    const budgetForCategory = (safeTotalBudget * category.percentage) / 100
     const spentPercentage = budgetForCategory > 0 ? (spent / budgetForCategory) * 100 : 0
 
     return {
@@ -43,9 +58,11 @@ export function Dashboard({ totalBudget, categories, expenses, onAddExpense, onR
     }
   })
 
-  const recentExpenses = expenses.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5)
+  const recentExpenses = safeExpenses
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    .slice(0, 5)
 
-  const thisWeekExpenses = expenses.filter((expense) => {
+  const thisWeekExpenses = safeExpenses.filter((expense) => {
     const expenseDate = new Date(expense.date)
     const weekAgo = new Date()
     weekAgo.setDate(weekAgo.getDate() - 7)
@@ -92,7 +109,7 @@ export function Dashboard({ totalBudget, categories, expenses, onAddExpense, onR
                   <CircularProgress percentage={spentPercentage} size={140} strokeWidth={12}>
                     <div className="text-center">
                       <div className="text-3xl font-bold text-black">€{totalSpent.toFixed(0)}</div>
-                      <div className="text-sm text-gray-600">di €{totalBudget.toFixed(0)}</div>
+                      <div className="text-sm text-gray-600">di €{safeTotalBudget.toFixed(0)}</div>
                     </div>
                   </CircularProgress>
                 </div>

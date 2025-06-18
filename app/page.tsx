@@ -2,198 +2,155 @@
 
 import { useState, useEffect } from "react"
 import { OnboardingSetup } from "@/components/onboarding-setup"
-import { Dashboard } from "@/components/dashboard"
-import { LoginForm } from "@/components/login-form"
-import { useAuth } from "@/hooks/use-auth"
-import { createBudget, getCurrentBudget } from "@/lib/actions/budget-actions"
-import { createExpense, getExpensesByBudget } from "@/lib/actions/expense-actions"
+import { EnhancedDashboard } from "@/components/enhanced-dashboard"
+import { UnifiedAuthForm } from "@/components/unified-auth-form"
+import { useAuthSystem } from "@/hooks/use-auth-system"
 import type { BudgetData, Expense } from "@/types/budget"
 
 export default function BudgetApp() {
-  const { user, isLoading: authLoading, isAuthenticated } = useAuth()
+  const {
+    user,
+    isLoading: authLoading,
+    isAuthenticated,
+    login,
+    register,
+    logout,
+    updateProfile,
+    avatarCharacters,
+    avatarBackgrounds,
+  } = useAuthSystem()
+
   const [budgetData, setBudgetData] = useState<BudgetData | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(false)
 
-  // Carica il budget corrente quando l'utente è autenticato
+  console.log("🚀 App State:", {
+    user: user?.email,
+    isAuthenticated,
+    authLoading,
+    hasBudget: !!budgetData,
+  })
+
+  // Carica budget quando l'utente è autenticato
   useEffect(() => {
-    if (user) {
-      loadCurrentBudget()
+    if (user && isAuthenticated) {
+      loadUserBudget()
     } else {
-      setIsLoading(false)
+      setBudgetData(null)
     }
-  }, [user])
+  }, [user, isAuthenticated])
 
-  const loadCurrentBudget = async () => {
+  const loadUserBudget = () => {
     if (!user) return
 
     setIsLoading(true)
-    setError(null)
-
     try {
-      const budgetResult = await getCurrentBudget(user.id)
+      const budgetKey = `budget-data-${user.id}`
+      const savedBudget = localStorage.getItem(budgetKey)
 
-      if (budgetResult.success && budgetResult.budget) {
-        const dbBudget = budgetResult.budget
-
-        // Carica le spese per questo budget
-        const expensesResult = await getExpensesByBudget(dbBudget.id)
-        const expenses = expensesResult.success ? expensesResult.expenses || [] : []
-
-        // Converti dal formato database al formato app
-        const budgetData: BudgetData = {
-          id: dbBudget.id.toString(),
-          userId: dbBudget.user_id.toString(),
-          totalBudget: dbBudget.total_amount,
-          categories: dbBudget.categories_json,
-          expenses: expenses.map((exp) => ({
-            id: exp.id.toString(),
-            amount: exp.amount,
-            categoryId: exp.category,
-            description: exp.description || "",
-            date: exp.date,
-            userId: exp.user_id.toString(),
-            budgetId: exp.budget_id.toString(),
-          })),
-          month: dbBudget.month,
-          year: dbBudget.year,
-          createdAt: dbBudget.created_at,
-        }
-
-        setBudgetData(budgetData)
+      if (savedBudget) {
+        const budget = JSON.parse(savedBudget)
+        setBudgetData(budget)
+        console.log("✅ Budget loaded for user:", user.email)
       } else {
-        // Nessun budget corrente trovato
+        console.log("📝 No budget found for user:", user.email)
         setBudgetData(null)
       }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore durante il caricamento del budget")
+    } catch (error) {
+      console.error("❌ Error loading budget:", error)
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleOnboardingComplete = async (newBudgetData: BudgetData) => {
+  const handleOnboardingComplete = (newBudgetData: BudgetData) => {
     if (!user) return
 
-    setIsLoading(true)
-    setError(null)
-
-    try {
-      const result = await createBudget({
-        user_id: user.id,
-        total_amount: newBudgetData.totalBudget,
-        categories_json: newBudgetData.categories,
-        month: newBudgetData.month,
-        year: newBudgetData.year,
-      })
-
-      if (result.success && result.budget) {
-        const budgetData: BudgetData = {
-          id: result.budget.id.toString(),
-          userId: result.budget.user_id.toString(),
-          totalBudget: result.budget.total_amount,
-          categories: result.budget.categories_json,
-          expenses: [],
-          month: result.budget.month,
-          year: result.budget.year,
-          createdAt: result.budget.created_at,
-        }
-
-        setBudgetData(budgetData)
-      } else {
-        setError(result.error || "Errore durante la creazione del budget")
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore durante la creazione del budget")
-    } finally {
-      setIsLoading(false)
+    const budgetWithUser = {
+      ...newBudgetData,
+      userId: user.id,
+      id: `budget-${Date.now()}`,
+      createdAt: new Date().toISOString(),
     }
+
+    const budgetKey = `budget-data-${user.id}`
+    localStorage.setItem(budgetKey, JSON.stringify(budgetWithUser))
+    setBudgetData(budgetWithUser)
+    console.log("✅ Budget created for user:", user.email)
   }
 
-  const handleAddExpense = async (expenseData: Omit<Expense, "id">) => {
+  const handleAddExpense = (expenseData: Omit<Expense, "id">) => {
     if (!user || !budgetData) return
 
-    try {
-      const result = await createExpense({
-        user_id: user.id,
-        budget_id: Number.parseInt(budgetData.id!),
-        amount: expenseData.amount,
-        category: expenseData.categoryId,
-        description: expenseData.description,
-        date: expenseData.date,
-      })
-
-      if (result.success && result.expense) {
-        const newExpense: Expense = {
-          id: result.expense.id.toString(),
-          amount: result.expense.amount,
-          categoryId: result.expense.category,
-          description: result.expense.description || "",
-          date: result.expense.date,
-          userId: result.expense.user_id.toString(),
-          budgetId: result.expense.budget_id.toString(),
-        }
-
-        setBudgetData((prev) =>
-          prev
-            ? {
-                ...prev,
-                expenses: [...prev.expenses, newExpense],
-              }
-            : null,
-        )
-      } else {
-        setError(result.error || "Errore durante l'aggiunta della spesa")
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Errore durante l'aggiunta della spesa")
+    const newExpense: Expense = {
+      ...expenseData,
+      id: `expense-${Date.now()}`,
+      userId: user.id,
+      amount:
+        typeof expenseData.amount === "number" ? expenseData.amount : Number.parseFloat(expenseData.amount.toString()),
     }
+
+    const updatedBudget = {
+      ...budgetData,
+      expenses: [...budgetData.expenses, newExpense],
+    }
+
+    const budgetKey = `budget-data-${user.id}`
+    localStorage.setItem(budgetKey, JSON.stringify(updatedBudget))
+    setBudgetData(updatedBudget)
+    console.log("✅ Expense added for user:", user.email)
   }
 
   const handleReset = () => {
+    if (!user) return
+
+    const budgetKey = `budget-data-${user.id}`
+    localStorage.removeItem(budgetKey)
     setBudgetData(null)
+    console.log("🔄 Budget reset for user:", user.email)
   }
 
+  const handleLogout = () => {
+    console.log("🔐 Initiating logout process...")
+    setBudgetData(null)
+    logout() // This will clear session data and redirect
+  }
+
+  // Loading state - Consistent with app design
   if (authLoading || isLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white text-lg font-medium">Caricamento...</div>
-      </div>
-    )
-  }
-
-  if (error) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center p-6">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center font-sans">
         <div className="text-center">
-          <div className="text-red-400 text-lg font-medium mb-4">Errore</div>
-          <div className="text-white mb-4">{error}</div>
-          <button
-            onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100"
-          >
-            Riprova
-          </button>
+          <div className="w-16 h-16 border-4 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-6"></div>
+          <div className="text-black text-xl font-bold mb-2">Caricamento...</div>
+          <div className="text-gray-600">{authLoading ? "Verifica autenticazione..." : "Caricamento dati..."}</div>
         </div>
       </div>
     )
   }
 
-  if (!isAuthenticated) {
-    return <LoginForm />
+  // Not authenticated - Show unified auth form
+  if (!isAuthenticated || !user) {
+    return <UnifiedAuthForm onLogin={login} onRegister={register} />
   }
 
+  // No budget data - Show onboarding
   if (!budgetData) {
     return <OnboardingSetup onComplete={handleOnboardingComplete} />
   }
 
+  // Main dashboard with user profile
   return (
-    <Dashboard
+    <EnhancedDashboard
       totalBudget={budgetData.totalBudget}
       categories={budgetData.categories}
       expenses={budgetData.expenses}
       onAddExpense={handleAddExpense}
       onReset={handleReset}
+      user={user}
+      onLogout={handleLogout}
+      onUpdateProfile={updateProfile}
+      avatarCharacters={avatarCharacters}
+      avatarBackgrounds={avatarBackgrounds}
     />
   )
 }

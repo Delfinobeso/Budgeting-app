@@ -1,32 +1,29 @@
 import { neon } from "@neondatabase/serverless"
 
 if (!process.env.DATABASE_URL) {
-  throw new Error("DATABASE_URL environment variable is not set")
+  throw new Error("DATABASE_URL is not set")
 }
 
 export const sql = neon(process.env.DATABASE_URL)
 
-// Utility per gestire gli errori del database
-export class DatabaseError extends Error {
-  constructor(
-    message: string,
-    public cause?: unknown,
-  ) {
-    super(message)
-    this.name = "DatabaseError"
+// Test della connessione
+export async function testConnection() {
+  try {
+    const result = await sql`SELECT NOW() as current_time`
+    console.log("✅ Database connected:", result[0].current_time)
+    return true
+  } catch (error) {
+    console.error("❌ Database connection failed:", error)
+    return false
   }
 }
 
-// Utility per validare i dati
+// Utility per validazione
 export function validateEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
   return emailRegex.test(email)
 }
 
-export function validateBudgetAmount(amount: number): boolean {
-  return amount > 0 && amount <= 1000000 // Max 1M euro
-}
-
-export function validatePercentage(percentage: number): boolean {
-  return percentage >= 0 && percentage <= 100
+export function validatePassword(password: string): boolean {
+  return password.length >= 6
 }

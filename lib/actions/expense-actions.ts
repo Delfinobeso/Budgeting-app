@@ -1,44 +1,58 @@
 "use server"
 
 import { sql } from "@/lib/db"
-import type { DbExpense, CreateExpenseData } from "@/types/database"
 import { revalidatePath } from "next/cache"
+import type { DbExpense, ActionResult } from "@/types/database"
 
-export async function createExpense(
-  data: CreateExpenseData,
-): Promise<{ success: boolean; expense?: DbExpense; error?: string }> {
+export async function createExpense(expenseData: {
+  user_id: number
+  budget_id: number
+  amount: number
+  category: string
+  description?: string
+  date: string
+}): Promise<ActionResult<DbExpense>> {
   try {
+    console.log("💸 Creating expense for user:", expenseData.user_id)
+
     // Validazione
-    if (data.amount <= 0) {
-      return { success: false, error: "Importo non valido" }
+    if (expenseData.amount <= 0) {
+      return { success: false, error: "Importo deve essere maggiore di 0" }
     }
 
-    if (!data.category || data.category.trim() === "") {
+    if (!expenseData.category.trim()) {
       return { success: false, error: "Categoria richiesta" }
     }
 
-    // Verifica che il budget esista
-    const budgetExists = await sql`
-      SELECT id FROM budgets WHERE id = ${data.budget_id} AND user_id = ${data.user_id}
+    if (!expenseData.date) {
+      return { success: false, error: "Data richiesta" }
+    }
+
+    // Verifica che il budget appartenga all'utente
+    const budget = await sql`
+      SELECT id FROM budgets 
+      WHERE id = ${expenseData.budget_id} AND user_id = ${expenseData.user_id}
     `
 
-    if (budgetExists.length === 0) {
-      return { success: false, error: "Budget non trovato" }
+    if (budget.length === 0) {
+      return { success: false, error: "Budget non trovato o non autorizzato" }
     }
 
     // Crea nuova spesa
     const result = await sql`
       INSERT INTO expenses (user_id, budget_id, amount, category, description, date)
-      VALUES (${data.user_id}, ${data.budget_id}, ${data.amount}, ${data.category}, ${data.description || null}, ${data.date})
-      RETURNING id, user_id, budget_id, amount, category, description, date, created_at, updated_at
+      VALUES (${expenseData.user_id}, ${expenseData.budget_id}, ${expenseData.amount}, ${expenseData.category}, ${expenseData.description || null}, ${expenseData.date})
+      RETURNING *
     `
 
     const expense = result[0] as DbExpense
 
-    revalidatePath("/dashboard")
-    return { success: true, expense }
+    console.log("✅ Expense created successfully:", expense.id)
+    revalidatePath("/")
+
+    return { success: true, data: expense }
   } catch (error) {
-    console.error("Error creating expense:", error)
+    console.error("❌ Create expense error:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Errore durante la creazione della spesa",
@@ -46,20 +60,20 @@ export async function createExpense(
   }
 }
 
-export async function getExpensesByBudget(
-  budgetId: number,
-): Promise<{ success: boolean; expenses?: DbExpense[]; error?: string }> {
+export async function getExpensesByBudget(budgetId: number): Promise<ActionResult<DbExpense[]>> {
   try {
+    console.log("📊 Getting expenses for budget:", budgetId)
+
     const result = await sql`
-      SELECT id, user_id, budget_id, amount, category, description, date, created_at, updated_at
-      FROM expenses 
+      SELECT * FROM expenses 
       WHERE budget_id = ${budgetId}
       ORDER BY date DESC, created_at DESC
     `
 
-    return { success: true, expenses: result as DbExpense[] }
+    console.log("✅ Found expenses:", result.length)
+    return { success: true, data: result as DbExpense[] }
   } catch (error) {
-    console.error("Error getting expenses:", error)
+    console.error("❌ Get expenses error:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Errore durante il recupero delle spese",
@@ -67,169 +81,56 @@ export async function getExpensesByBudget(
   }
 }
 
-export async function getExpensesByUser(
-  userId: number,
-  limit?: number,
-): Promise<{ success: boolean; expenses?: DbExpense[]; error?: string }> {
+export async function getExpensesByUser(userId: number): Promise<ActionResult<DbExpense[]>> {
   try {
-    const result = limit
-      ? await sql`
-          SELECT id, user_id, budget_id, amount, category, description, date, created_at, updated_at
-          FROM expenses 
-          WHERE user_id = ${userId}
-          ORDER BY date DESC, created_at DESC
-          LIMIT ${limit}
-        `
-      : await sql`
-          SELECT id, user_id, budget_id, amount, category, description, date, created_at, updated_at
-          FROM expenses 
-          WHERE user_id = ${userId}
-          ORDER BY date DESC, created_at DESC
-        `
-
-    return { success: true, expenses: result as DbExpense[] }
-  } catch (error) {
-    console.error("Error getting user expenses:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Errore durante il recupero delle spese",
-    }
-  }
-}
-
-export async function updateExpense(
-  id: number,
-  data: Partial<CreateExpenseData>,
-): Promise<{ success: boolean; expense?: DbExpense; error?: string }> {
-  try {
-    if (data.amount && data.amount <= 0) {
-      return { success: false, error: "Importo non valido" }
-    }
+    console.log("📊 Getting all expenses for user:", userId)
 
     const result = await sql`
-      UPDATE expenses 
-      SET 
-        amount = COALESCE(${data.amount || null}, amount),
-        category = COALESCE(${data.category || null}, category),
-        description = COALESCE(${data.description || null}, description),
-        date = COALESCE(${data.date || null}, date),
-        updated_at = CURRENT_TIMESTAMP
-      WHERE id = ${id}
-      RETURNING id, user_id, budget_id, amount, category, description, date, created_at, updated_at
+      SELECT * FROM expenses 
+      WHERE user_id = ${userId}
+      ORDER BY date DESC, created_at DESC
     `
 
-    if (result.length === 0) {
-      return { success: false, error: "Spesa non trovata" }
-    }
-
-    const expense = result[0] as DbExpense
-
-    revalidatePath("/dashboard")
-    return { success: true, expense }
+    console.log("✅ Found expenses:", result.length)
+    return { success: true, data: result as DbExpense[] }
   } catch (error) {
-    console.error("Error updating expense:", error)
+    console.error("❌ Get user expenses error:", error)
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Errore durante l'aggiornamento della spesa",
+      error: error instanceof Error ? error.message : "Errore durante il recupero delle spese",
     }
   }
 }
 
-export async function deleteExpense(id: number): Promise<{ success: boolean; error?: string }> {
+export async function deleteExpense(expenseId: number, userId: number): Promise<ActionResult> {
   try {
-    const result = await sql`DELETE FROM expenses WHERE id = ${id} RETURNING id`
+    console.log("🗑️ Deleting expense:", expenseId, "for user:", userId)
 
-    if (result.length === 0) {
-      return { success: false, error: "Spesa non trovata" }
+    // Verifica che la spesa appartenga all'utente
+    const expense = await sql`
+      SELECT id FROM expenses 
+      WHERE id = ${expenseId} AND user_id = ${userId}
+    `
+
+    if (expense.length === 0) {
+      return { success: false, error: "Spesa non trovata o non autorizzata" }
     }
 
-    revalidatePath("/dashboard")
+    // Elimina la spesa
+    await sql`
+      DELETE FROM expenses 
+      WHERE id = ${expenseId} AND user_id = ${userId}
+    `
+
+    console.log("✅ Expense deleted successfully")
+    revalidatePath("/")
+
     return { success: true }
   } catch (error) {
-    console.error("Error deleting expense:", error)
+    console.error("❌ Delete expense error:", error)
     return {
       success: false,
       error: error instanceof Error ? error.message : "Errore durante l'eliminazione della spesa",
-    }
-  }
-}
-
-export async function getExpenseStats(
-  userId: number,
-  budgetId?: number,
-): Promise<{
-  success: boolean
-  stats?: {
-    totalExpenses: number
-    expensesByCategory: { category: string; total: number; count: number }[]
-    monthlyTrend: { month: string; total: number }[]
-  }
-  error?: string
-}> {
-  try {
-    // Statistiche totali
-    const totalQuery = budgetId
-      ? sql`SELECT COUNT(*) as count, SUM(amount) as total FROM expenses WHERE user_id = ${userId} AND budget_id = ${budgetId}`
-      : sql`SELECT COUNT(*) as count, SUM(amount) as total FROM expenses WHERE user_id = ${userId}`
-
-    const totalResult = await totalQuery
-    const totalExpenses = Number(totalResult[0]?.total || 0)
-
-    // Spese per categoria
-    const categoryQuery = budgetId
-      ? sql`
-          SELECT category, SUM(amount) as total, COUNT(*) as count 
-          FROM expenses 
-          WHERE user_id = ${userId} AND budget_id = ${budgetId}
-          GROUP BY category 
-          ORDER BY total DESC
-        `
-      : sql`
-          SELECT category, SUM(amount) as total, COUNT(*) as count 
-          FROM expenses 
-          WHERE user_id = ${userId}
-          GROUP BY category 
-          ORDER BY total DESC
-        `
-
-    const categoryResult = await categoryQuery
-    const expensesByCategory = categoryResult.map((row) => ({
-      category: row.category as string,
-      total: Number(row.total),
-      count: Number(row.count),
-    }))
-
-    // Trend mensile (ultimi 6 mesi)
-    const monthlyQuery = sql`
-      SELECT 
-        TO_CHAR(date, 'YYYY-MM') as month,
-        SUM(amount) as total
-      FROM expenses 
-      WHERE user_id = ${userId}
-      AND date >= CURRENT_DATE - INTERVAL '6 months'
-      GROUP BY TO_CHAR(date, 'YYYY-MM')
-      ORDER BY month DESC
-    `
-
-    const monthlyResult = await monthlyQuery
-    const monthlyTrend = monthlyResult.map((row) => ({
-      month: row.month as string,
-      total: Number(row.total),
-    }))
-
-    return {
-      success: true,
-      stats: {
-        totalExpenses,
-        expensesByCategory,
-        monthlyTrend,
-      },
-    }
-  } catch (error) {
-    console.error("Error getting expense stats:", error)
-    return {
-      success: false,
-      error: error instanceof Error ? error.message : "Errore durante il recupero delle statistiche",
     }
   }
 }
