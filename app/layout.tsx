@@ -25,7 +25,16 @@ export const metadata: Metadata = {
     ],
   },
   icons: {
-    apple: [{ url: "/icons/apple-touch-icon.png", sizes: "180x180" }],
+    icon: [
+      { url: "/icons/favicon-16x16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icons/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/icons/apple-touch-icon-152x152.png", sizes: "152x152", type: "image/png" },
+      { url: "/icons/apple-touch-icon-167x167.png", sizes: "167x167", type: "image/png" },
+      { url: "/icons/apple-touch-icon-120x120.png", sizes: "120x120", type: "image/png" },
+    ],
   },
     generator: 'v0.dev'
 }
@@ -47,12 +56,23 @@ export default function RootLayout({
   return (
     <html lang="it">
       <head>
+        {/* iOS-specific meta tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="Mobius" />
-        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+        {/* Apple Touch Icons - iOS will choose the best size */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/icons/apple-touch-icon.png" />
+        <link rel="apple-touch-icon" sizes="167x167" href="/icons/apple-touch-icon-167x167.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/icons/apple-touch-icon-152x152.png" />
+        <link rel="apple-touch-icon" sizes="120x120" href="/icons/apple-touch-icon-120x120.png" />
+
+        {/* Standard favicons */}
         <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32x32.png" />
         <link rel="icon" type="image/png" sizes="16x16" href="/icons/favicon-16x16.png" />
+
+        {/* Cache busting for icons - update version when icons change */}
+        <meta name="icon-version" content="1.0.0" />
       </head>
       <body className={inter.className}>{children}</body>
     </html>
