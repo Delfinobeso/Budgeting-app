@@ -36,6 +36,7 @@ export const metadata: Metadata = {
       { url: "/icons/apple-touch-icon-120x120.png", sizes: "120x120", type: "image/png" },
     ],
   },
+  themeColor: "#161616",
     generator: 'v0.dev'
 }
 
@@ -45,7 +46,7 @@ export const viewport: Viewport = {
   maximumScale: 1,
   userScalable: false,
   viewportFit: "cover",
-  themeColor: "#f8f9fa",
+  themeColor: "#161616",
 }
 
 export default function RootLayout({
@@ -56,6 +57,7 @@ export default function RootLayout({
   return (
     <html lang="it">
       <head>
+        {/* New Mobius Budget Logo Icons */}
         {/* iOS-specific meta tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />

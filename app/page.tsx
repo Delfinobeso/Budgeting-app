@@ -87,6 +87,32 @@ export default function BudgetApp() {
     console.log("✅ Expense added and saved locally")
   }
 
+  const handleUpdateExpense = (expenseId: string, updates: Partial<Expense>) => {
+    if (!budgetData) return
+
+    const updatedBudget = {
+      ...budgetData,
+      expenses: budgetData.expenses.map((expense) => (expense.id === expenseId ? { ...expense, ...updates } : expense)),
+    }
+
+    localStorage.setItem("budget-app-data", JSON.stringify(updatedBudget))
+    setBudgetData(updatedBudget)
+    console.log("✅ Expense updated and saved locally")
+  }
+
+  const handleDeleteExpense = (expenseId: string) => {
+    if (!budgetData) return
+
+    const updatedBudget = {
+      ...budgetData,
+      expenses: budgetData.expenses.filter((expense) => expense.id !== expenseId),
+    }
+
+    localStorage.setItem("budget-app-data", JSON.stringify(updatedBudget))
+    setBudgetData(updatedBudget)
+    console.log("✅ Expense deleted and saved locally")
+  }
+
   const handleReset = () => {
     localStorage.removeItem("budget-app-data")
     setBudgetData(null)
@@ -118,6 +144,8 @@ export default function BudgetApp() {
       categories={budgetData.categories}
       expenses={budgetData.expenses}
       onAddExpense={handleAddExpense}
+      onUpdateExpense={handleUpdateExpense}
+      onDeleteExpense={handleDeleteExpense}
       onReset={handleReset}
       historicalData={historicalData}
     />

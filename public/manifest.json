@@ -1,11 +1,11 @@
 {
   "name": "Mobius Budget",
   "short_name": "Mobius",
-  "description": "Personal budget management app with intelligent spending tracking",
+  "description": "Mobius Budget - Personal budget management app with intelligent spending tracking",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#f8f9fa",
-  "theme_color": "#f8f9fa",
+  "background_color": "#161616",
+  "theme_color": "#161616",
   "orientation": "portrait",
   "scope": "/",
   "icons": [

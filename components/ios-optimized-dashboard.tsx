@@ -7,7 +7,9 @@ import { Badge } from "@/components/ui/badge"
 import { CircularProgress } from "./circular-progress"
 import { AddExpense } from "./add-expense"
 import { BottomNav } from "./bottom-nav"
-import type { Category, Expense } from "@/types/budget"
+import { ExpenseItem } from "./expense-item"
+import { EditExpenseModal } from "./edit-expense-modal"
+import type { Category, Expense } from "@/lib/types"
 import { Calendar, AlertTriangle, Target, DollarSign, Eye, EyeOff, ChevronRight, Zap, Settings } from "lucide-react"
 import {
   calculateCategorySpending,
@@ -26,6 +28,8 @@ interface IOSOptimizedDashboardProps {
   categories: Category[]
   expenses: Expense[]
   onAddExpense: (expense: Omit<Expense, "id">) => void
+  onUpdateExpense: (expenseId: string, updates: Partial<Expense>) => void
+  onDeleteExpense: (expenseId: string) => void
   onReset: () => void
   historicalData: HistoricalData | null
 }
@@ -35,6 +39,8 @@ export function IOSOptimizedDashboard({
   categories,
   expenses,
   onAddExpense,
+  onUpdateExpense,
+  onDeleteExpense,
   onReset,
   historicalData,
 }: IOSOptimizedDashboardProps) {
@@ -44,6 +50,7 @@ export function IOSOptimizedDashboard({
   const [showBudgetDetails, setShowBudgetDetails] = useState(false)
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [showSettings, setShowSettings] = useState(false)
+  const [editingExpense, setEditingExpense] = useState<Expense | null>(null)
 
   useEffect(() => {
     setIsVisible(true)
@@ -105,6 +112,22 @@ export function IOSOptimizedDashboard({
   const handleCategoryClick = (categoryId: string) => {
     triggerHaptic("light")
     setSelectedCategory(selectedCategory === categoryId ? null : categoryId)
+  }
+
+  const handleEditExpense = (expense: Expense) => {
+    triggerHaptic("medium")
+    setEditingExpense(expense)
+  }
+
+  const handleDeleteExpense = (expenseId: string) => {
+    triggerHaptic("heavy")
+    onDeleteExpense(expenseId)
+  }
+
+  const handleUpdateExpense = (expenseId: string, updates: Partial<Expense>) => {
+    triggerHaptic("medium")
+    onUpdateExpense(expenseId, updates)
+    setEditingExpense(null)
   }
 
   return (
@@ -430,55 +453,34 @@ export function IOSOptimizedDashboard({
               })}
           </div>
 
-          {/* iOS-style Recent Activity */}
+          {/* iOS-style Recent Activity with Edit/Delete functionality */}
           {recentExpenses.length > 0 && (
             <div className="mb-6">
               <h2 className="ios-section-header mb-4">Attività Recente</h2>
-              <Card className="ios-list-item">
-                <CardContent className="p-0">
-                  <div className="divide-y divide-gray-100">
-                    {recentExpenses.map((expense, index) => {
-                      const category = categories.find((cat) => cat.id === expense.categoryId)
-                      const categorySpend = categorySpending.find((cs) => cs.categoryId === expense.categoryId)
+              <div className="space-y-2">
+                {recentExpenses.map((expense, index) => {
+                  const category = categories.find((cat) => cat.id === expense.categoryId)
+                  const categorySpend = categorySpending.find((cs) => cs.categoryId === expense.categoryId)
 
-                      return (
-                        <div
-                          key={expense.id}
-                          className="flex items-center justify-between p-4 hover:bg-gray-50 transition-colors first:rounded-t-xl last:rounded-b-xl"
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="relative w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
-                              <span className="text-lg">{category?.icon}</span>
-                              {categorySpend?.isOverspent && (
-                                <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></div>
-                              )}
-                            </div>
-                            <div>
-                              <div className="font-medium text-black text-sm ios-body">
-                                {expense.description || category?.name}
-                              </div>
-                              <div className="text-xs text-gray-600 flex items-center space-x-2">
-                                <span>{formatDate(expense.date)}</span>
-                                <span>•</span>
-                                <span>{category?.name}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <div className="font-bold text-red-500">-{formatCurrency(expense.amount)}</div>
-                            <div className="text-xs text-gray-500">
-                              {new Date(expense.date).toLocaleTimeString("it-IT", {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                </CardContent>
-              </Card>
+                  return (
+                    <div
+                      key={expense.id}
+                      className={`transform transition-all duration-1000 ${
+                        isVisible ? "translate-y-0 opacity-100" : "translate-y-20 opacity-0"
+                      }`}
+                      style={{ transitionDelay: `${600 + index * 100}ms` }}
+                    >
+                      <ExpenseItem
+                        expense={expense}
+                        category={category}
+                        onEdit={handleEditExpense}
+                        onDelete={handleDeleteExpense}
+                        isOverspent={categorySpend?.isOverspent}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
             </div>
           )}
         </div>
@@ -523,6 +525,16 @@ export function IOSOptimizedDashboard({
           totalBudget={totalBudget}
           categories={categories}
           expenses={expenses}
+        />
+      )}
+
+      {/* Edit Expense Modal */}
+      {editingExpense && (
+        <EditExpenseModal
+          expense={editingExpense}
+          categories={categories}
+          onUpdateExpense={handleUpdateExpense}
+          onClose={() => setEditingExpense(null)}
         />
       )}
 

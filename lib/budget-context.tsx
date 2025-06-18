@@ -42,6 +42,30 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
     updateBudget(updatedBudget)
   }
 
+  const updateExpense = (expenseId: string, updatedExpense: Partial<Expense>) => {
+    if (!budget) return
+
+    const updatedBudget = {
+      ...budget,
+      expenses: budget.expenses.map((expense) =>
+        expense.id === expenseId ? { ...expense, ...updatedExpense } : expense,
+      ),
+    }
+
+    updateBudget(updatedBudget)
+  }
+
+  const deleteExpense = (expenseId: string) => {
+    if (!budget) return
+
+    const updatedBudget = {
+      ...budget,
+      expenses: budget.expenses.filter((expense) => expense.id !== expenseId),
+    }
+
+    updateBudget(updatedBudget)
+  }
+
   const updateIsOnboarded = (value: boolean) => {
     setIsOnboarded(value)
     localStorage.setItem("isOnboarded", JSON.stringify(value))
@@ -53,6 +77,8 @@ export function BudgetProvider({ children }: { children: ReactNode }) {
         budget,
         setBudget: updateBudget,
         addExpense,
+        updateExpense,
+        deleteExpense,
         isOnboarded,
         setIsOnboarded: updateIsOnboarded,
       }}
