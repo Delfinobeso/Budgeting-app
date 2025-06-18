@@ -3,12 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Card, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { EnhancedCircularProgress } from "./enhanced-circular-progress"
 import { DEFAULT_CATEGORIES, EXTENDED_CATEGORIES, BUDGET_SUGGESTIONS } from "@/lib/constants"
 import type { Category, BudgetData } from "@/types/budget"
-import { ArrowRight, ArrowLeft, Check, Target, Home } from "lucide-react"
+import { ArrowRight, ArrowLeft, Check } from "lucide-react"
 import { PercentageInput } from "./percentage-input"
 import { MobiusLogo } from "./mobius-logo"
 
@@ -233,125 +231,148 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
 
       {/* Step 2: Category Configuration */}
       {step === 2 && (
-        <div className="h-screen bg-gray-50 flex flex-col animate-slide-up overflow-hidden">
+        <div className="min-h-screen bg-black flex flex-col animate-slide-up">
           {/* iOS Safe Area Header */}
           <div className="ios-safe-top flex-shrink-0" />
 
-          {/* Main Content Container - iPhone 13 Optimized */}
-          <div className="flex-1 flex flex-col min-h-0 max-w-sm mx-auto px-0">
-            {/* Compact Header */}
-            <div className="flex-shrink-0 text-center py-3">
-              <h1 className="text-xl font-bold text-black mb-1">Distribuisci il budget</h1>
-              <p className="text-gray-600 text-xs">Personalizza i tuoi €{totalBudget}</p>
-            </div>
-
-            {/* Category Mode Toggle - Compact */}
-            <div className="flex-shrink-0 mb-3">
-              <div className="flex bg-gray-200 rounded-xl p-1">
+          {/* Main Content Container */}
+          <div className="flex-1 flex flex-col justify-between px-6 py-4 min-h-0">
+            {/* Top Section - Header and Navigation */}
+            <div className="flex-shrink-0 text-center pt-4">
+              <div className="flex items-center justify-between mb-4">
                 <Button
-                  variant={useSimpleCategories ? "default" : "ghost"}
-                  onClick={() => switchCategoryMode(true)}
-                  className={`flex-1 h-8 rounded-lg font-medium text-xs transition-all ${
-                    useSimpleCategories ? "bg-black text-white shadow-lg" : "text-gray-600 hover:bg-gray-100"
-                  }`}
+                  variant="ghost"
+                  onClick={() => setStep(1)}
+                  className="text-white hover:bg-white/10 px-0 h-auto font-normal"
                 >
-                  <Target className="w-3 h-3 mr-1" />
-                  Semplice
+                  <ArrowLeft className="mr-1 h-4 w-4" />
+                  Indietro
                 </Button>
-                <Button
-                  variant={!useSimpleCategories ? "default" : "ghost"}
-                  onClick={() => switchCategoryMode(false)}
-                  className={`flex-1 h-8 rounded-lg font-medium text-xs transition-all ${
-                    !useSimpleCategories ? "bg-black text-white shadow-lg" : "text-gray-600 hover:bg-gray-100"
-                  }`}
-                >
-                  <Home className="w-3 h-3 mr-1" />
-                  Dettagliato
-                </Button>
+                <h1 className="text-lg font-semibold text-white">Categorie</h1>
+                <div className="w-16"></div> {/* Spacer for alignment */}
               </div>
+
+              {/* Progress indicator */}
+              <div className="flex justify-center mb-6">
+                <div className="flex space-x-1">
+                  <div className="w-6 h-1 bg-white/30 rounded-full"></div>
+                  <div className="w-6 h-1 bg-white rounded-full"></div>
+                  <div className="w-6 h-1 bg-white/30 rounded-full"></div>
+                </div>
+              </div>
+
+              <h2 className="text-2xl font-bold text-white mb-2">Distribuisci il budget</h2>
+              <p className="text-gray-400 text-sm mb-4">Personalizza i tuoi €{totalBudget}</p>
             </div>
 
-            {/* Compact Budget Overview */}
-            <div className="flex-shrink-0 mb-3">
-              <Card className="bg-white rounded-xl shadow-md p-3">
-                <CardContent className="p-0">
+            {/* Center Section - Content */}
+            <div className="flex-1 flex flex-col justify-center min-h-0 py-4">
+              {/* Segmented Control */}
+              <div className="mb-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-1 flex border border-white/20">
+                  <button
+                    onClick={() => switchCategoryMode(true)}
+                    className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+                      useSimpleCategories
+                        ? "bg-white text-black shadow-lg"
+                        : "text-white/70 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    Semplice
+                  </button>
+                  <button
+                    onClick={() => switchCategoryMode(false)}
+                    className={`flex-1 py-2 px-4 rounded-xl text-sm font-medium transition-all ${
+                      !useSimpleCategories
+                        ? "bg-white text-black shadow-lg"
+                        : "text-white/70 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    Dettagliato
+                  </button>
+                </div>
+              </div>
+
+              {/* Budget Status Card */}
+              <div className="mb-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-3">
-                      <EnhancedCircularProgress
-                        percentage={Math.min(totalPercentage, 100)}
-                        size={60}
-                        color={
-                          Math.abs(totalPercentage - 100) <= 1
-                            ? "#22c55e"
-                            : totalPercentage > 100
-                              ? "#ef4444"
-                              : "#f59e0b"
-                        }
-                      >
-                        <div className="text-center">
-                          <div className="text-xs font-bold text-black">{totalPercentage}%</div>
-                        </div>
-                      </EnhancedCircularProgress>
-                      <div className="flex-1">
-                        <div className="text-sm font-semibold text-black">Budget Totale</div>
-                        <Badge
-                          variant={Math.abs(totalPercentage - 100) <= 1 ? "default" : "secondary"}
-                          className={`text-xs mt-1 ${
+                      <div className="relative">
+                        <EnhancedCircularProgress
+                          percentage={Math.min(totalPercentage, 100)}
+                          size={40}
+                          color={
                             Math.abs(totalPercentage - 100) <= 1
-                              ? "bg-green-100 text-green-800 border-green-200"
+                              ? "#22c55e"
                               : totalPercentage > 100
-                                ? "bg-red-100 text-red-800 border-red-200"
-                                : "bg-amber-100 text-amber-800 border-amber-200"
+                                ? "#ef4444"
+                                : "#f59e0b"
+                          }
+                        >
+                          <div className="text-center">
+                            <div className="text-xs font-semibold text-white">{totalPercentage}%</div>
+                          </div>
+                        </EnhancedCircularProgress>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="text-sm font-medium text-white truncate">Allocazione Budget</div>
+                        <div
+                          className={`text-xs truncate ${
+                            Math.abs(totalPercentage - 100) <= 1
+                              ? "text-green-400"
+                              : totalPercentage > 100
+                                ? "text-red-400"
+                                : "text-yellow-400"
                           }`}
                         >
                           {Math.abs(totalPercentage - 100) <= 1
-                            ? "Perfetto!"
+                            ? "Bilanciato"
                             : totalPercentage > 100
-                              ? `Troppo: -${totalPercentage - 100}%`
-                              : `Manca: +${100 - totalPercentage}%`}
-                        </Badge>
+                              ? `Eccesso: ${totalPercentage - 100}%`
+                              : `Mancante: ${100 - totalPercentage}%`}
+                        </div>
                       </div>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </div>
+                </div>
+              </div>
 
-            {/* Categories - Optimized Scrollable Container */}
-            <div className="flex-1 overflow-y-auto min-h-0 mb-3 scrollbar-hide">
-              <div className="space-y-2">
-                {categories.map((category, index) => (
-                  <Card
-                    key={category.id}
-                    className="bg-white rounded-xl shadow-sm p-3 hover:shadow-md transition-all duration-200"
-                  >
-                    <CardContent className="p-0">
+              {/* Categories List - Scrollable */}
+              <div className="flex-1 overflow-y-auto min-h-0">
+                <div className="space-y-2">
+                  {categories.map((category, index) => (
+                    <div
+                      key={category.id}
+                      className="bg-white/10 backdrop-blur-sm rounded-2xl p-3 border border-white/20 hover:bg-white/15 transition-all duration-200"
+                    >
                       <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center space-x-2 min-w-0 flex-1">
-                          <span className="text-base flex-shrink-0">{category.icon}</span>
-                          <div className="min-w-0 flex-1">
-                            <span className="font-medium text-black text-sm truncate block">{category.name}</span>
-                            <p className="text-xs text-gray-500 truncate">{(category as any).description}</p>
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <span className="text-lg flex-shrink-0">{category.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white truncate">{category.name}</div>
+                            <div className="text-xs text-gray-400 truncate">{(category as any).description}</div>
                           </div>
                         </div>
-                        <div className="flex-shrink-0">
+                        <div className="flex items-center space-x-2 flex-shrink-0">
                           <PercentageInput
                             value={category.percentage}
                             onChange={(value) => updateCategoryPercentage(index, value)}
+                            className="w-12 h-7 text-center text-xs border border-white/30 rounded-lg focus:border-white bg-white/10 text-white placeholder-gray-400 backdrop-blur-sm"
                           />
                         </div>
                       </div>
 
                       <div className="space-y-1">
-                        <div className="flex justify-between items-center text-xs text-gray-600">
-                          <span className="truncate">
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-gray-300 truncate">
                             €{((Number.parseFloat(totalBudget) * category.percentage) / 100).toFixed(0)}
                           </span>
-                          <span className="flex-shrink-0">{category.percentage}%</span>
+                          <span className="text-gray-300 font-medium flex-shrink-0">{category.percentage}%</span>
                         </div>
-                        <div className="w-full bg-gray-200 rounded-full h-1.5">
+                        <div className="w-full bg-white/20 rounded-full h-1.5">
                           <div
-                            className="h-1.5 rounded-full transition-all duration-500"
+                            className="h-1.5 rounded-full transition-all duration-300"
                             style={{
                               width: `${Math.min(category.percentage, 100)}%`,
                               backgroundColor: category.color,
@@ -359,39 +380,22 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
                           />
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                    </div>
+                  ))}
+                </div>
               </div>
             </div>
 
-            {/* Fixed Action Buttons - Always Visible */}
-            <div className="flex-shrink-0 bg-gray-50">
-              <div className="flex gap-2 mb-3">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(1)}
-                  className="flex-1 h-10 bg-white border border-gray-300 text-black rounded-xl hover:bg-gray-50 text-sm font-medium"
-                >
-                  <ArrowLeft className="mr-1 h-3 w-3" />
-                  Indietro
-                </Button>
-                <Button
-                  onClick={() => setStep(3)}
-                  disabled={Math.abs(totalPercentage - 100) > 1}
-                  className="flex-1 h-10 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-200 active:scale-95 disabled:opacity-50 text-sm"
-                >
-                  Continua
-                  <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
-              </div>
-
-              {/* Compact Progress indicators */}
-              <div className="flex justify-center space-x-1 pb-safe-bottom">
-                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-                <div className="w-1.5 h-1.5 bg-black rounded-full"></div>
-                <div className="w-1.5 h-1.5 bg-gray-400 rounded-full"></div>
-              </div>
+            {/* Bottom Section - Action Button */}
+            <div className="flex-shrink-0 pb-safe-bottom pt-4">
+              <Button
+                onClick={() => setStep(3)}
+                disabled={Math.abs(totalPercentage - 100) > 1}
+                className="w-full h-12 bg-white hover:bg-gray-100 text-black font-semibold rounded-2xl transition-all duration-300 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg"
+              >
+                Continua
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
             </div>
           </div>
         </div>
@@ -399,72 +403,111 @@ export function EnhancedOnboarding({ onComplete }: EnhancedOnboardingProps) {
 
       {/* Step 3: Summary & Confirmation */}
       {step === 3 && (
-        <div className="min-h-screen bg-gray-50 flex flex-col animate-slide-up">
-          <div className="flex-1 flex flex-col max-w-md mx-auto pt-8 pb-4">
-            {/* Header */}
-            <div className="text-center mb-6">
-              <div className="text-4xl mb-3">🎉</div>
-              <h1 className="text-2xl font-bold text-black mb-1">Tutto pronto!</h1>
-              <p className="text-gray-600 text-sm">Il tuo budget mensile</p>
+        <div className="min-h-screen bg-black flex flex-col animate-slide-up">
+          {/* iOS Safe Area Header */}
+          <div className="ios-safe-top flex-shrink-0" />
+
+          {/* Main Content Container */}
+          <div className="flex-1 flex flex-col justify-between px-6 py-4 min-h-0">
+            {/* Top Section - Header and Navigation */}
+            <div className="flex-shrink-0 text-center pt-4">
+              <div className="flex items-center justify-between mb-4">
+                <Button
+                  variant="ghost"
+                  onClick={() => setStep(2)}
+                  className="text-white hover:bg-white/10 px-0 h-auto font-normal"
+                >
+                  <ArrowLeft className="mr-1 h-4 w-4" />
+                  Indietro
+                </Button>
+                <h1 className="text-lg font-semibold text-white">Riepilogo</h1>
+                <div className="w-16"></div> {/* Spacer for alignment */}
+              </div>
+
+              {/* Progress indicator */}
+              <div className="flex justify-center mb-6">
+                <div className="flex space-x-1">
+                  <div className="w-6 h-1 bg-white/30 rounded-full"></div>
+                  <div className="w-6 h-1 bg-white/30 rounded-full"></div>
+                  <div className="w-6 h-1 bg-white rounded-full"></div>
+                </div>
+              </div>
+
+              {/* Success Header */}
+              <div className="w-16 h-16 bg-white/10 backdrop-blur-sm rounded-full flex items-center justify-center mx-auto mb-4 border border-white/20">
+                <Check className="w-8 h-8 text-white" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">Tutto pronto!</h2>
+              <p className="text-gray-400 text-sm mb-4">Il tuo budget è configurato</p>
             </div>
 
-            {/* Summary Card - Scrollable if needed */}
-            <div className="flex-1 overflow-y-auto mb-4">
-              <Card className="bg-white rounded-2xl shadow-xl p-6 mb-4">
-                <CardContent className="p-0">
+            {/* Center Section - Content */}
+            <div className="flex-1 flex flex-col justify-center min-h-0 py-4">
+              {/* Budget Summary Card */}
+              <div className="mb-4">
+                <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-4 border border-white/20">
                   <div className="text-center mb-4">
-                    <div className="text-2xl font-bold text-black mb-1">€{totalBudget}</div>
-                    <p className="text-gray-600 text-sm">Budget Mensile</p>
+                    <div className="text-2xl font-bold text-white mb-1">€{totalBudget}</div>
+                    <div className="text-sm text-gray-400">Budget Mensile</div>
                   </div>
 
-                  <div className="space-y-3">
-                    {categories.map((category) => (
-                      <div key={category.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
-                        <div className="flex items-center space-x-3 min-w-0 flex-1">
-                          <span className="text-lg flex-shrink-0">{category.icon}</span>
-                          <div className="min-w-0 flex-1">
-                            <div className="font-medium text-black text-sm truncate">{category.name}</div>
-                            <div className="text-xs text-gray-600">{category.percentage}%</div>
+                  <div className="space-y-1 max-h-48 overflow-y-auto">
+                    {categories.map((category, index) => (
+                      <div
+                        key={category.id}
+                        className={`flex items-center justify-between py-2 ${
+                          index !== categories.length - 1 ? "border-b border-white/10" : ""
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2 flex-1 min-w-0">
+                          <span className="text-base flex-shrink-0">{category.icon}</span>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium text-white truncate">{category.name}</div>
+                            <div className="text-xs text-gray-400 truncate">{category.percentage}% del budget</div>
                           </div>
                         </div>
                         <div className="text-right flex-shrink-0">
-                          <div className="font-bold text-black text-sm">
+                          <div className="text-sm font-semibold text-white">
                             €{((Number.parseFloat(totalBudget) * category.percentage) / 100).toFixed(0)}
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
+
+              {/* Features Preview */}
+              <div className="mb-4">
+                <div className="bg-white/5 backdrop-blur-sm rounded-2xl p-4 border border-white/10">
+                  <h3 className="text-sm font-semibold text-white mb-3">Cosa puoi fare ora:</h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full flex-shrink-0"></div>
+                      <span className="text-xs text-gray-300 truncate">Tracciare le tue spese quotidiane</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full flex-shrink-0"></div>
+                      <span className="text-xs text-gray-300 truncate">Monitorare i progressi per categoria</span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <div className="w-1.5 h-1.5 bg-white rounded-full flex-shrink-0"></div>
+                      <span className="text-xs text-gray-300 truncate">Ricevere notifiche sui limiti</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
-            {/* Sticky Action Buttons */}
-            <div className="bg-gray-50 pt-3 pb-safe-bottom">
-              <div className="flex gap-3 mb-4">
-                <Button
-                  variant="outline"
-                  onClick={() => setStep(2)}
-                  className="flex-1 h-11 bg-white border-2 border-gray-200 text-black rounded-xl hover:bg-gray-50"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Modifica
-                </Button>
-                <Button
-                  onClick={handleComplete}
-                  className="flex-1 h-11 bg-black hover:bg-gray-800 text-white font-semibold rounded-xl transition-all duration-200 active:scale-95"
-                >
-                  <Check className="mr-2 h-4 w-4" />
-                  Conferma
-                </Button>
-              </div>
-
-              {/* Progress indicators */}
-              <div className="flex justify-center space-x-2">
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                <div className="w-2 h-2 bg-black rounded-full"></div>
-              </div>
+            {/* Bottom Section - Action Button */}
+            <div className="flex-shrink-0 pb-safe-bottom pt-4">
+              <Button
+                onClick={handleComplete}
+                className="w-full h-12 bg-white hover:bg-gray-100 text-black font-semibold rounded-2xl transition-all duration-200 active:scale-95 shadow-lg"
+              >
+                <Check className="mr-2 h-4 w-4" />
+                Inizia a usare Mobius
+              </Button>
             </div>
           </div>
         </div>
