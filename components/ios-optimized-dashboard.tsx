@@ -110,50 +110,58 @@ export function IOSOptimizedDashboard({
   return (
     <div className="min-h-screen bg-gray-50 font-sans ios-safe-area">
       {activeTab === "home" && (
-        <div className="px-4 pb-24">
+        <div className="px-4 pt-2 pb-24">
           {/* iOS-style status bar spacing */}
           <div className="status-bar-spacing" />
 
-          {/* Header with iOS-style large title */}
-          <div
-            className={`mb-6 pt-4 transform transition-all duration-800 ${
-              isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-2">
-              <div className="flex-1">
-                <h1 className="ios-large-title text-black">Budget</h1>
-                <p className="ios-body text-gray-600 mt-1">
-                  {new Date().toLocaleDateString("it-IT", {
-                    weekday: "long",
-                    day: "numeric",
-                    month: "long",
-                  })}
-                </p>
-              </div>
-              <div className="flex items-center space-x-2">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    triggerHaptic("light")
-                    setShowBudgetDetails(!showBudgetDetails)
-                  }}
-                  className="w-11 h-11 rounded-full ios-button haptic-light"
-                >
-                  {showBudgetDetails ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => {
-                    triggerHaptic("light")
-                    setShowSettings(true)
-                  }}
-                  className="w-11 h-11 rounded-full ios-button haptic-light"
-                >
-                  <Settings className="h-5 w-5" />
-                </Button>
+          {/* iOS-optimized Header with Safe Area - Aligned with Apple UI Guidelines */}
+          <div className="ios-safe-top bg-white/95 backdrop-blur-md border-b border-gray-100/50 sticky top-0 z-40">
+            <div
+              className={`px-4 pb-2 pt-1 transform transition-all duration-800 ${
+                isVisible ? "translate-y-0 opacity-100" : "translate-y-10 opacity-0"
+              }`}
+            >
+              {/* Status bar spacer for notch */}
+              <div className="h-2" />
+
+              {/* Clean, typography-focused header following iOS guidelines */}
+              <div className="flex flex-col">
+                <h1 className="text-[34px] font-bold leading-tight tracking-tight text-black">Mobius</h1>
+                <div className="flex items-center justify-between">
+                  <p className="text-[17px] text-gray-600 font-medium">
+                    {new Date().toLocaleDateString("it-IT", {
+                      weekday: "short",
+                      day: "numeric",
+                      month: "short",
+                    })}
+                  </p>
+
+                  {/* Action Buttons - positioned to avoid notch */}
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        triggerHaptic("light")
+                        setShowBudgetDetails(!showBudgetDetails)
+                      }}
+                      className="w-9 h-9 rounded-full ios-button haptic-light bg-transparent hover:bg-gray-100/80"
+                    >
+                      {showBudgetDetails ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        triggerHaptic("light")
+                        setShowSettings(true)
+                      }}
+                      className="w-9 h-9 rounded-full ios-button haptic-light bg-transparent hover:bg-gray-100/80"
+                    >
+                      <Settings className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
